@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f1923">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MLBB Counter Picker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0e1a;--bg2:#131a2e;--bg3:#1a2340;--bg4:#213058;--t1:#e8eaf6;--t2:#9ea7c4;--t3:#5c6480;--gold:#ffd700;--blue:#3f7fff;--purple:#7c4dff;--tank:#2196F3;--fighter:#FF9800;--assassin:#f44336;--mage:#9C27B0;--mm:#FFD700;--support:#4CAF50;--r:12px}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--t1);min-height:100dvh;overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{max-width:480px;margin:0 auto;min-height:100dvh}
+@media(min-width:481px){body{background:#050810}.app{border-left:1px solid rgba(255,255,255,.05);border-right:1px solid rgba(255,255,255,.05)}}
+
+.splash{position:fixed;inset:0;background:linear-gradient(135deg,#1a237e,#0d47a1,#7c4dff);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s,visibility .5s}
+.splash.h{opacity:0;visibility:hidden;pointer-events:none}
+.splash .icon{font-size:72px;animation:bounce 1.2s ease infinite}
+.splash h1{font-size:26px;background:linear-gradient(135deg,#ffd700,#ff9800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;margin-top:12px}
+.splash p{color:rgba(255,255,255,.6);font-size:13px;margin-top:6px}
+.splash .loader{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-top:24px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.hdr{background:linear-gradient(135deg,#1a237e,#0d47a1,#7c4dff);padding:16px 14px 20px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo span:first-child{font-size:28px}
+.logo span:last-child{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ffd700,#ff9800);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lang{display:flex;background:rgba(255,255,255,.1);border-radius:50px;overflow:hidden}
+.lang button{padding:5px 12px;border:none;background:0;color:rgba(255,255,255,.5);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.lang button.on{color:#fff;background:rgba(255,255,255,.2);border-radius:50px}
+
+.srch{position:relative}
+.srch input{width:100%;height:48px;padding:0 44px;border:2px solid rgba(255,255,255,.2);border-radius:50px;background:rgba(255,255,255,.1);color:#fff;font-size:15px;font-family:inherit;outline:0;transition:.2s;backdrop-filter:blur(10px)}
+.srch input::placeholder{color:rgba(255,255,255,.4)}
+.srch input:focus{border-color:var(--gold);background:rgba(255,255,255,.15);box-shadow:0 0 0 3px rgba(255,215,0,.15)}
+.srch .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none}
+.srch .sc{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.srch .sc.v{display:flex}
+
+.dd{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg3);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:300px;overflow-y:auto;z-index:200;display:none;border:1px solid rgba(255,255,255,.1)}
+.dd.v{display:block;animation:fd .2s ease}
+@keyframes fd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dd-i{display:flex;align-items:center;padding:10px 14px;cursor:pointer;gap:10px;min-height:48px;border-bottom:1px solid rgba(255,255,255,.05);transition:.15s}
+.dd-i:active{background:rgba(63,127,255,.15)}
+.dd-i.dis{opacity:.35;pointer-events:none}
+.dd-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+.dd-inf{flex:1;min-width:0}
+.dd-n{font-size:14px;font-weight:600}
+.dd-na{font-size:11px;color:var(--t2)}
+.dd-r{font-size:10px;color:var(--t3);margin-top:1px}
+
+.chips-sec{padding:0 14px;min-height:0;transition:.2s}
+.chips-sec.has{padding:10px 14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;background:var(--bg3);border-radius:50px;border:1px solid rgba(255,255,255,.12);animation:ci .25s ease}
+@keyframes ci{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.chip-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.chip-n{font-size:12px;font-weight:600;white-space:nowrap}
+.chip-x{background:rgba(255,255,255,.12);border:none;color:var(--t2);width:20px;height:20px;border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:2px}
+.chip-x:active{background:rgba(244,67,54,.4);color:#fff}
+.badge{font-size:11px;color:var(--t3);padding:3px 10px;background:rgba(255,255,255,.05);border-radius:50px}
+
+.acts{padding:10px 14px;display:flex;gap:8px}
+.btn-clr{flex:0 0 48px;height:44px;border:2px solid rgba(255,255,255,.12);border-radius:var(--r);background:0;color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.btn-clr:active{transform:scale(.9);border-color:var(--assassin);color:var(--assassin)}
+.sel-info{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--t2);background:rgba(255,255,255,.05);border-radius:var(--r);padding:0 12px;height:44px}
+.sel-info .num{color:var(--gold);font-weight:700;font-size:18px}
+
+.res{padding:0 14px 100px}
+.res-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.res-hdr h2{font-size:16px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:6px}
+.res-cnt{font-size:12px;color:var(--t3)}
+
+.rf{display:flex;gap:5px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
+.rf::-webkit-scrollbar{display:none}
+.rf button{padding:5px 12px;border-radius:50px;border:1.5px solid rgba(255,255,255,.12);background:0;color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.15s}
+.rf button.on{color:#fff;border-color:currentColor}
+.rf button:active{transform:scale(.95)}
+
+.card{background:linear-gradient(145deg,#1a2340,#131a2e);border-radius:var(--r);padding:12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;animation:cfi .3s ease backwards;transition:.15s}
+.card:active{transform:scale(.98);border-color:rgba(63,127,255,.25)}
+@keyframes cfi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-top{display:flex;align-items:center;gap:10px}
+.card-rk{font-size:13px;font-weight:800;color:var(--t3);min-width:22px;text-align:center}
+.card-rk.r1{color:#FFD700;font-size:17px}.card-rk.r2{color:#C0C0C0;font-size:15px}.card-rk.r3{color:#CD7F32;font-size:15px}
+.card-av{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0}
+.card-inf{flex:1;min-width:0}
+.card-nm{font-size:15px;font-weight:700}
+.card-na{font-size:11px;color:var(--t2)}
+.card-rl{display:flex;gap:3px;margin-top:2px}
+.card-rt{font-size:9px;padding:1px 6px;border-radius:50px;color:#fff;font-weight:600}
+.card-sc{text-align:center;min-width:44px}
+.card-sv{font-size:20px;font-weight:800;background:linear-gradient(135deg,#ffd700,#ff9800);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card-sl{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+
+.sbar{margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)}
+.sbar-bg{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.sbar-f{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.sbar-f.hi{background:linear-gradient(90deg,#4CAF50,#66BB6A)}.sbar-f.md{background:linear-gradient(90deg,#FF9800,#FFB74D)}.sbar-f.lo{background:linear-gradient(90deg,#f44336,#EF5350)}
+
+.card-det{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.card-det.exp{max-height:600px}
+.card-det-in{padding-top:10px;margin-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+.cr{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.cr:last-child{border-bottom:none}
+.cr-vs{font-size:10px;color:var(--gold);font-weight:600;min-width:70px;white-space:nowrap}
+.cr-t{font-size:12px;color:var(--t2);flex:1;line-height:1.4}
+.cr-s{font-size:11px;font-weight:700;color:var(--gold);min-width:24px;text-align:right}
+
+.ci-sec{margin-top:16px;padding:14px;background:linear-gradient(145deg,#1a2340,#131a2e);border-radius:var(--r);border:1px solid rgba(255,255,255,.06)}
+.ci-sec h3{font-size:15px;font-weight:700;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.dmg-an{display:flex;gap:8px;margin-bottom:12px;padding:10px;background:rgba(255,255,255,.03);border-radius:8px}
+.dmg-t{flex:1;text-align:center}
+.dmg-l{font-size:10px;color:var(--t3);margin-bottom:3px}
+.dmg-b{height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:40px}
+.ic{margin-bottom:10px}
+.ic-h{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ic-n{font-size:13px;font-weight:600}
+.il{display:flex;flex-wrap:wrap;gap:5px}
+.it{font-size:11px;padding:3px 9px;background:rgba(63,127,255,.15);border:1px solid rgba(63,127,255,.25);border-radius:50px;color:var(--blue);font-weight:500}
+
+.empty{text-align:center;padding:50px 20px}
+.empty .ei{font-size:56px;margin-bottom:14px;opacity:.6}
+.empty h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--t3);max-width:260px;margin:0 auto;line-height:1.6}
+
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);color:var(--t1);padding:10px 20px;border-radius:50px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);z-index:1000;opacity:0;transition:.3s;white-space:nowrap}
+.toast.v{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.hidden{display:none!important}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+::selection{background:rgba(63,127,255,.3)}
+@supports(padding-top:env(safe-area-inset-top)){.hdr{padding-top:calc(16px + env(safe-area-inset-top))}}
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="icon">⚔️</div>
+  <h1>MLBB COUNTER</h1>
+  <p>اختار كاونتر العدو بذكاء</p>
+  <div class="loader"></div>
+</div>
+
+<div class="app">
+  <header class="hdr">
+    <div class="hdr-top">
+      <div class="logo"><span>⚔️</span><span>MLBB Counter</span></div>
+      <div class="lang">
+        <button class="on" data-l="ar">عربي</button>
+        <button data-l="en">EN</button>
+      </div>
+    </div>
+    <div class="srch">
+      <span class="si">🔍</span>
+      <input type="text" id="si" placeholder="ابحث عن بطل العدو..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="sc" id="sc">✕</button>
+      <div class="dd" id="dd"></div>
+    </div>
+  </header>
+
+  <div class="chips-sec" id="csec">
+    <div class="chips" id="chips"></div>
+    <span class="badge hidden" id="badge"></span>
+  </div>
+
+  <div class="acts">
+    <div class="sel-info" id="selinfo">
+      <span id="infotext">⚔️ اختر أبطال العدو من البحث</span>
+    </div>
+    <button class="btn-clr" id="bc">🗑️</button>
+  </div>
+
+  <div class="res" id="res">
+    <div class="res-hdr hidden" id="rh">
+      <h2>⚔️ <span id="rht">الأبطال المضادين</span></h2>
+      <span class="res-cnt" id="rc"></span>
+    </div>
+    <div class="rf hidden" id="rf">
+      <button class="on" data-r="All">الكل</button>
+      <button data-r="Tank">🛡️ Tank</button>
+      <button data-r="Fighter">⚔️ Fighter</button>
+      <button data-r="Assassin">🗡️ Assassin</button>
+      <button data-r="Mage">🔮 Mage</button>
+      <button data-r="Marksman">🏹 MM</button>
+      <button data-r="Support">💚 Support</button>
+    </div>
+    <div id="rl"></div>
+    <div class="ci-sec hidden" id="cis"></div>
+    <div class="empty" id="emp">
+      <div class="ei">🎮</div>
+      <h3>ابدأ باختيار أبطال العدو</h3>
+      <p>ابحث عن أبطال الفريق الخصم واختار من 1 لـ 5 أبطال وهنجيبلك أفضل الكاونترات فوراً</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const RC={Tank:'#2196F3',Fighter:'#FF9800',Assassin:'#f44336',Mage:'#9C27B0',Marksman:'#FFD700',Support:'#4CAF50'};
+function H(id,en,ar,roles,cntrs){return{id,n:en,a:ar,r:roles,c:cntrs||[]};}
+function C(id,s,ar,en){return{id,s,ar,en};}
+
+const D=[
+H(1,"Miya","ميا",["Marksman"],[C(3,9.5,"سيبر يقفلها بالألت","Saber ult locks her"),C(8,9.2,"كارينا تغتالها","Karina assassinates"),C(7,9,"ألوكارد يوصلها","Alucard chases"),C(21,8.8,"هايابوسا يقتلها 1v1","Hayabusa solos"),C(17,8.5,"فاني تغطس عليها","Fanny dives"),C(10,8,"فرانكو يسحبها","Franco hooks"),C(16,7.5,"زيلونج يقفز عليها","Zilong dives"),C(5,7,"نانا تحولها","Nana polymorphs")]),
+H(2,"Balmond","بالماند",["Fighter"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces regen"),C(36,8,"كاري ضرر حقيقي","Karrie true dmg"),C(16,7.5,"زيلونج يغلبه 1v1","Zilong outfights"),C(15,7,"يودورا تصعقه","Eudora stuns"),C(3,6.5,"سيبر يقفله","Saber suppresses")]),
+H(3,"Saber","سيبر",["Assassin"],[C(20,8.5,"لوليتا تصد شفراته","Lolita blocks blades"),C(9,8,"أكاي يمنعه من الهروب","Akai pins him"),C(6,7.5,"تيغريال يحمي الحلفاء","Tigreal peels"),C(19,7,"مينوتور يرميه","Minotaur knocks up")]),
+H(4,"Alice","أليس",["Tank","Mage"],[C(131,9,"باكسيا يقلل علاجها","Baxia reduces sustain"),C(36,8.5,"كاري تخترقها","Karrie shreds"),C(15,7.5,"يودورا تصعقها","Eudora bursts"),C(3,7,"سيبر يقفلها","Saber suppresses")]),
+H(5,"Nana","نانا",["Mage"],[C(21,9,"هايابوسا يتفادى بالظلال","Hayabusa dodges"),C(8,8.5,"كارينا تغتالها","Karina bursts"),C(17,8,"فاني تطير عليها","Fanny dives"),C(3,7.5,"سيبر يقفلها","Saber suppresses"),C(16,7,"زيلونج يقفز عليها","Zilong dives")]),
+H(6,"Tigreal","تيغريال",["Tank"],[C(54,8.5,"ديغي يلغي كل CC","Diggie removes CC"),C(36,8,"كاري تذوبه","Karrie melts"),C(35,7.5,"فاليير يبعده","Valir pushes"),C(10,7,"فرانكو يسحبه","Franco hooks")]),
+H(7,"Alucard","ألوكارد",["Fighter","Assassin"],[C(131,9.5,"باكسيا يلغي علاجه","Baxia negates heal"),C(3,9,"سيبر يقفله","Saber suppresses"),C(15,8.5,"يودورا تصعقه","Eudora stuns"),C(8,8,"كارينا تقتله","Karina bursts"),C(5,7.5,"نانا تحوله","Nana polymorphs")]),
+H(8,"Karina","كارينا",["Assassin"],[C(20,9,"لوليتا تصد مهاراتها","Lolita blocks skills"),C(6,8.5,"تيغريال يحمي الفريق","Tigreal CC protects"),C(3,8,"سيبر يقفلها","Saber locks"),C(15,7.5,"يودورا تصعقها","Eudora stuns"),C(5,7,"نانا تحولها","Nana polymorphs")]),
+H(9,"Akai","أكاي",["Tank"],[C(54,9,"ديغي يلغي الدحرجة","Diggie removes CC"),C(35,8.5,"فاليير يبعده","Valir pushes"),C(36,8,"كاري تخترقه","Karrie shreds"),C(10,7,"فرانكو يقطعه","Franco interrupts")]),
+H(10,"Franco","فرانكو",["Tank"],[C(54,9,"ديغي يلغي كل CC","Diggie removes CC"),C(35,8,"فاليير يبعده","Valir pushes"),C(20,7.5,"لوليتا تصد الهوك","Lolita blocks hook"),C(36,7,"كاري تذوبه","Karrie melts")]),
+H(11,"Bane","باين",["Fighter","Mage"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(3,8,"سيبر يقفله","Saber suppresses"),C(8,7.5,"كارينا تغتاله","Karina assassinates"),C(15,7,"يودورا تصعقه","Eudora stuns")]),
+H(12,"Bruno","برونو",["Marksman"],[C(3,9.5,"سيبر يقفله","Saber locks"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(21,8.5,"هايابوسا يقتله","Hayabusa solos"),C(17,8,"فاني تغطس","Fanny dives"),C(10,7.5,"فرانكو يسحبه","Franco hooks")]),
+H(13,"Clint","كلينت",["Marksman"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(21,8.5,"هايابوسا يقتله","Hayabusa kills"),C(10,8,"فرانكو يسحبه","Franco hooks"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(14,"Rafaela","رافاييلا",["Support"],[C(131,8.5,"باكسيا يقلل علاجها","Baxia reduces heal"),C(3,8,"سيبر يقفلها","Saber locks"),C(8,7.5,"كارينا تغتالها","Karina assassinates"),C(10,7,"فرانكو يسحبها","Franco hooks")]),
+H(15,"Eudora","يودورا",["Mage"],[C(21,9,"هايابوسا يتفادى الكومبو","Hayabusa dodges combo"),C(17,8.5,"فاني تتفادى","Fanny dodges"),C(8,8,"كارينا تقتلها أسرع","Karina bursts faster"),C(54,7.5,"ديغي يلغي الصعقة","Diggie removes stun"),C(3,7,"سيبر يقفلها","Saber suppresses")]),
+H(16,"Zilong","زيلونج",["Fighter","Assassin"],[C(6,8.5,"تيغريال يتحكم فيه","Tigreal CC locks"),C(15,8,"يودورا تصعقه","Eudora stuns"),C(9,7.5,"أكاي يبعده","Akai pins"),C(5,7,"نانا تحوله","Nana polymorphs"),C(3,6.5,"سيبر يقفله","Saber suppresses")]),
+H(17,"Fanny","فاني",["Assassin"],[C(30,9.8,"خوفرا يقطع حبالها","Khufra stops cables"),C(10,9.5,"فرانكو يسحبها ويقفلها","Franco hooks & suppresses"),C(9,9,"أكاي يقطع حبالها","Akai interrupts cables"),C(3,8.5,"سيبر يقفلها","Saber suppresses"),C(20,8,"لوليتا تصد الحبال","Lolita blocks"),C(6,7.5,"تيغريال يمسكها","Tigreal catches")]),
+H(18,"Layla","ليلى",["Marksman"],[C(3,9.8,"سيبر يقفلها فوراً","Saber instant lock"),C(8,9.5,"كارينا تغتالها","Karina assassinates"),C(21,9,"هايابوسا يقتلها","Hayabusa solos"),C(17,8.8,"فاني تطير عليها","Fanny dives"),C(10,8.5,"فرانكو = موت","Franco hook = death"),C(16,8,"زيلونج يقفز عليها","Zilong dives"),C(7,7.5,"ألوكارد يوصلها","Alucard reaches"),C(5,7,"نانا تحولها","Nana polymorphs")]),
+H(19,"Minotaur","مينوتور",["Tank","Support"],[C(54,8.5,"ديغي يلغي ألته","Diggie removes ult"),C(36,8,"كاري تخترقه","Karrie shreds"),C(35,7.5,"فاليير يبعده","Valir pushes")]),
+H(20,"Lolita","لوليتا",["Support","Tank"],[C(16,8,"زيلونج ضربات أساسية","Zilong basic attacks"),C(36,7.5,"كاري تخترقها","Karrie shreds"),C(7,7,"ألوكارد قتال قريب","Alucard melee"),C(54,6.5,"ديغي يلغي ألتها","Diggie removes stun")]),
+H(21,"Hayabusa","هايابوسا",["Assassin"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(38,9,"مينسيتار يمنع الوميض","Minsitthar disables blink"),C(8,8,"كارينا تبادله","Karina trades"),C(6,7.5,"تيغريال يحبسه","Tigreal locks"),C(10,7,"فرانكو يسحبه","Franco hooks")]),
+H(22,"Freya","فريا",["Fighter"],[C(15,8.5,"يودورا تصعقها","Eudora stuns"),C(131,8,"باكسيا يقلل علاجها","Baxia reduces sustain"),C(3,7.5,"سيبر يقفلها","Saber suppresses"),C(36,7,"كاري تخترقها","Karrie shreds")]),
+H(23,"Gusion","غوسيون",["Assassin"],[C(20,9.2,"لوليتا تصد خناجره","Lolita blocks daggers"),C(38,9,"مينسيتار يمنع الوميض","Minsitthar disables blink"),C(30,8.5,"خوفرا يقطع اندفاشه","Khufra stops dash"),C(3,8,"سيبر يقفله","Saber suppresses"),C(6,7.5,"تيغريال يحبسه","Tigreal locks")]),
+H(24,"Johnson","جونسون",["Tank"],[C(54,9,"ديغي يلغي صدمة السيارة","Diggie removes crash"),C(35,8.5,"فاليير يبعده","Valir pushes"),C(36,8,"كاري تخترقه","Karrie shreds"),C(10,7.5,"فرانكو يقطع السيارة","Franco stops car")]),
+H(25,"Moskov","موسكوف",["Marksman"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(17,8.5,"فاني تغطس","Fanny dives"),C(10,8,"فرانكو يسحبه","Franco hooks"),C(21,7.5,"هايابوسا يقتله","Hayabusa kills")]),
+H(26,"Esmeralda","إزميرالدا",["Mage","Tank"],[C(36,9.5,"كاري تخترق دروعها","Karrie bypasses shields"),C(131,9,"باكسيا يقلل دروعها","Baxia reduces shield"),C(40,8.5,"ديروث يسرق دفاعها","Dyrroth steals defense"),C(3,7.5,"سيبر يقفلها","Saber suppresses"),C(15,7,"يودورا تصعقها","Eudora stuns")]),
+H(27,"Estes","إستس",["Support"],[C(131,9.5,"باكسيا يقلل علاجه 50%","Baxia reduces healing 50%"),C(3,8.5,"سيبر يقفله","Saber locks"),C(8,8,"كارينا تغتاله","Karina assassinates"),C(10,7.5,"فرانكو يسحبه","Franco hooks"),C(15,7,"يودورا تقتله بكومبو","Eudora combos")]),
+H(28,"Wanwan","وان وان",["Marksman"],[C(42,9,"فوفوس يستغل قفزاتها","Phoveus exploits dashes"),C(3,8.5,"سيبر يقفلها","Saber suppresses"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(30,7.5,"خوفرا يقطع قفزاتها","Khufra stops dashes"),C(10,7,"فرانكو يسحبها","Franco hooks")]),
+H(29,"Zhask","زاشك",["Mage"],[C(5,8.7,"نانا تحوله وتدمر كائنه","Nana polymorphs"),C(15,8.5,"يودورا تصعقه","Eudora stuns"),C(3,8,"سيبر يقفله","Saber suppresses"),C(8,7.5,"كارينا تغتاله","Karina assassinates")]),
+H(30,"Khufra","خوفرا",["Tank"],[C(54,9,"ديغي يلغي CC","Diggie removes CC"),C(36,8,"كاري تخترقه","Karrie shreds"),C(35,7.5,"فاليير يبعده","Valir pushes")]),
+H(31,"Odette","أوديت",["Mage"],[C(3,9.5,"سيبر يقطع ألتها","Saber cancels ult"),C(10,9,"فرانكو يقطع ألتها","Franco cancels ult"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يتفادى","Hayabusa dodges"),C(17,7.5,"فاني تقطع ألتها","Fanny interrupts")]),
+H(32,"Gord","غورد",["Mage"],[C(3,9.5,"سيبر يقطع ألته","Saber cancels ult"),C(8,9,"كارينا تقتله","Karina kills"),C(21,8.5,"هايابوسا يتفادى","Hayabusa dodges"),C(17,8,"فاني تغطس","Fanny dives")]),
+H(33,"Pharsa","فارسا",["Mage"],[C(3,9.5,"سيبر يقطع ألتها","Saber cancels ult"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa kills"),C(17,8,"فاني تغطس","Fanny dives"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(34,"Angela","أنجيلا",["Support"],[C(3,8.5,"سيبر يقفلها قبل الألت","Saber locks before ult"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(10,7.5,"فرانكو يسحبها","Franco hooks"),C(15,7,"يودورا تقتلها","Eudora combos")]),
+H(35,"Valir","فاليير",["Mage","Support"],[C(21,9,"هايابوسا يتجاوز ناره","Hayabusa dodges fire"),C(17,8.5,"فاني تتفادى","Fanny dodges"),C(8,8,"كارينا تغتاله","Karina bursts"),C(3,7.5,"سيبر يقفله","Saber suppresses")]),
+H(36,"Karrie","كاري",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(17,8,"فاني تغطس","Fanny dives"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(37,"Aurora","أورورا",["Mage"],[C(21,9,"هايابوسا يتفادى التجميد","Hayabusa dodges freeze"),C(17,8.5,"فاني تتفادى","Fanny dodges"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(3,7.5,"سيبر يقفلها","Saber suppresses")]),
+H(38,"Minsitthar","مينسيتار",["Fighter"],[C(36,8,"كاري تخترقه","Karrie shreds"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(131,7,"باكسيا يتحمله","Baxia tanks him")]),
+H(39,"Kadita","كاديتا",["Mage"],[C(54,8.5,"ديغي يلغي تحكمها","Diggie removes CC"),C(21,8,"هايابوسا يتفادى","Hayabusa dodges"),C(3,7.5,"سيبر يقفلها","Saber suppresses")]),
+H(40,"Dyrroth","ديروث",["Fighter"],[C(15,8.5,"يودورا تصعقه","Eudora stuns"),C(3,8,"سيبر يقفله","Saber suppresses"),C(8,7.5,"كارينا تقتله","Karina kills"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(41,"Uranus","يورانوس",["Tank","Fighter"],[C(131,9.5,"باكسيا يلغي كل علاجه","Baxia negates regen"),C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(40,8,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(3,7,"سيبر يقفله","Saber suppresses")]),
+H(42,"Phoveus","فوفوس",["Fighter"],[C(18,8.5,"ليلى لا تندفع","Layla no dash, ult useless"),C(131,8,"باكسيا يقلل علاجه","Baxia reduces sustain"),C(26,7.5,"إزميرالدا تمتص دروعه","Esmeralda absorbs"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(43,"Atlas","أطلس",["Tank"],[C(54,9.5,"ديغي يلغي ألته","Diggie removes ult"),C(36,8,"كاري تخترقه","Karrie shreds"),C(35,7.5,"فاليير يبعده","Valir pushes")]),
+H(44,"Ling","لينغ",["Assassin"],[C(30,9,"خوفرا يمنع القفز","Khufra stops jumps"),C(3,8.5,"سيبر يقفله","Saber suppresses"),C(10,8,"فرانكو يسحبه","Franco hooks"),C(15,7.5,"يودورا تصعقه","Eudora stuns")]),
+H(45,"Chou","تشو",["Fighter"],[C(54,8.5,"ديغي يلغي ألته","Diggie removes ult"),C(36,8,"كاري تخترقه","Karrie shreds"),C(42,7.5,"فوفوس يستغل اندفاشه","Phoveus exploits dash"),C(15,7,"يودورا تصعقه","Eudora stuns")]),
+H(46,"Gloo","جلو",["Tank","Fighter"],[C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces regen"),C(40,8,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(15,7,"يودورا تقتله","Eudora bursts")]),
+H(47,"Aldous","ألدوس",["Fighter"],[C(3,9,"سيبر يقفله لما يطير","Saber suppresses on landing"),C(6,8.5,"تيغريال يحبسه","Tigreal locks"),C(8,8,"كارينا تقتله","Karina kills"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(5,7,"نانا تحوله","Nana polymorphs")]),
+H(48,"Natalia","ناتاليا",["Assassin"],[C(20,8.5,"لوليتا ترصدها","Lolita detects"),C(3,8,"سيبر يقفلها","Saber locks"),C(6,7.5,"تيغريال يمسكها","Tigreal catches"),C(15,7,"يودورا تصعقها","Eudora stuns")]),
+H(49,"Hanabi","هانابي",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(17,8,"فاني تغطس","Fanny dives"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(50,"Guinevere","غينيفير",["Fighter","Mage"],[C(54,9,"ديغي يلغي ألتها","Diggie removes ult"),C(42,8.5,"فوفوس يستغل قفزتها","Phoveus exploits jump"),C(30,8,"خوفرا يقطع قفزتها","Khufra stops jump"),C(3,7.5,"سيبر يقفلها","Saber suppresses"),C(36,7,"كاري تخترقها","Karrie shreds")]),
+H(51,"Granger","غرانجر",["Marksman"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(8,8.5,"كارينا تغتاله","Karina assassinates"),C(20,8,"لوليتا تصد رصاصاته","Lolita blocks bullets"),C(10,7.5,"فرانكو يسحبه","Franco hooks")]),
+H(52,"Chang'e","تشانغ",["Mage"],[C(20,9.5,"لوليتا تصد كل قذائفها","Lolita blocks all"),C(3,9,"سيبر يقفلها","Saber locks"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills")]),
+H(53,"Floryn","فلورين",["Support"],[C(131,9,"باكسيا يقلل علاجها","Baxia reduces heal"),C(3,8.5,"سيبر يقفلها","Saber suppresses"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(54,"Diggie","ديغي",["Support"],[C(3,8,"سيبر قمعه مش CC عادي","Saber suppress not normal CC"),C(8,7.5,"كارينا تغتاله","Karina bursts"),C(36,7,"كاري تخترقه","Karrie shreds"),C(15,6.5,"يودورا تقتله","Eudora combos")]),
+H(55,"Vale","فيل",["Mage"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(21,8.5,"هايابوسا يتفادى","Hayabusa dodges"),C(8,8,"كارينا تغتاله","Karina assassinates"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(56,"Cecilion","سيسيليون",["Mage"],[C(3,9.5,"سيبر يقفله","Saber locks"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(21,8.5,"هايابوسا يقتله","Hayabusa kills"),C(17,8,"فاني تغطس","Fanny dives")]),
+H(57,"Benedetta","بينيديتا",["Assassin"],[C(42,9,"فوفوس يستغل اندفاشها","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعها","Khufra stops"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(6,7.5,"تيغريال يمسكها","Tigreal catches")]),
+H(58,"Lancelot","لانسلوت",["Assassin"],[C(42,9,"فوفوس يستغل اندفاشه","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعه","Khufra stops"),C(3,8,"سيبر يقفله","Saber suppresses"),C(38,7.5,"مينسيتار يمنع الوميض","Minsitthar disables blink")]),
+H(59,"Nolan","نولان",["Assassin"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(38,9,"مينسيتار يمنع اندفاشه","Minsitthar disables blinks"),C(6,8,"تيغريال يمسكه","Tigreal catches"),C(30,7.5,"خوفرا يقطعه","Khufra stops")]),
+H(60,"Sora","سورا",["Fighter","Assassin"],[C(42,9,"فوفوس يستغل اندفاشه","Phoveus exploits dashes"),C(3,8.5,"سيبر يقفله","Saber suppresses"),C(30,8,"خوفرا يقطعه","Khufra stops"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(61,"Masha","ماشا",["Fighter","Tank"],[C(131,8.5,"باكسيا يقلل علاجها","Baxia reduces regen"),C(36,8,"كاري ضرر حقيقي","Karrie true dmg"),C(15,7.5,"يودورا تصعقها","Eudora stuns"),C(3,7,"سيبر يقفلها","Saber suppresses")]),
+H(62,"Carmilla","كارميلا",["Support","Tank"],[C(36,8,"كاري تخترقها","Karrie shreds"),C(54,7.5,"ديغي يلغي ألتها","Diggie removes ult"),C(3,7,"سيبر يقفلها","Saber suppresses")]),
+H(63,"Belerick","بيليريك",["Tank"],[C(36,8.5,"كاري تخترقه","Karrie shreds"),C(54,8,"ديغي يلغي ألته","Diggie removes ult"),C(40,7.5,"ديروث يسرق دفاعه","Dyrroth steals defense")]),
+H(64,"Helcurt","هيلكورت",["Assassin"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(6,8,"تيغريال يمسكه","Tigreal catches"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(20,7,"لوليتا تصد مهاراته","Lolita blocks")]),
+H(65,"Leomord","ليوموورد",["Fighter"],[C(3,8.5,"سيبر ينزله عن الحصان","Saber suppresses off horse"),C(15,8,"يودورا تصعقه","Eudora stuns"),C(36,7.5,"كاري تخترقه","Karrie shreds"),C(131,7,"باكسيا يقلل علاجه","Baxia reduces sustain")]),
+H(66,"Roger","روجر",["Fighter","Marksman"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(15,8,"يودورا تصعقه","Eudora stuns"),C(8,7.5,"كارينا تغتاله","Karina assassinates"),C(131,7,"باكسيا يقلل علاجه","Baxia reduces heal")]),
+H(67,"Harith","هاريث",["Mage"],[C(42,9,"فوفوس يستغل اندفاشه","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعه","Khufra stops"),C(38,8,"مينسيتار يمنع الوميض","Minsitthar disables"),C(3,7.5,"سيبر يقفله","Saber suppresses")]),
+H(68,"Harley","هارلي",["Mage","Assassin"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(30,8.5,"خوفرا يقطعه","Khufra stops"),C(20,8,"لوليتا تصد بطاقاته","Lolita blocks cards"),C(6,7,"تيغريال يمسكه","Tigreal catches")]),
+H(69,"Irithel","إيريثل",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(10,8,"فرانكو يسحبها","Franco hooks")]),
+H(70,"Grock","غروك",["Tank"],[C(36,8.5,"كاري تخترقه","Karrie shreds"),C(54,8,"ديغي يلغي CC","Diggie removes CC"),C(35,7.5,"فاليير يبعده","Valir pushes")]),
+H(71,"Jawhead","جوهيد",["Fighter","Tank"],[C(54,8.5,"ديغي يلغي الرمي","Diggie removes CC"),C(36,8,"كاري تخترقه","Karrie shreds"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(3,7,"سيبر يقفله","Saber suppresses")]),
+H(72,"Martis","مارتيس",["Fighter"],[C(15,8.5,"يودورا تصعقه","Eudora stuns"),C(3,8,"سيبر يقفله","Saber suppresses"),C(36,7.5,"كاري تخترقه","Karrie shreds"),C(131,7,"باكسيا يقلل علاجه","Baxia reduces heal")]),
+H(73,"Hanzo","هانزو",["Assassin"],[C(48,9,"ناتاليا تقتل جسده","Natalia kills real body"),C(3,8.5,"سيبر يقفل جسده","Saber suppresses body"),C(10,8,"فرانكو يسحب جسده","Franco hooks body"),C(8,7.5,"كارينا تجد جسده","Karina finds body")]),
+H(74,"Lesley","ليسلي",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(48,9,"ناتاليا تغتالها","Natalia assassinates"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa solos"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(75,"Gatotkaca","غاتوتكاكا",["Tank","Fighter"],[C(36,8.5,"كاري تخترقه","Karrie shreds"),C(54,8,"ديغي يلغي ألته","Diggie removes ult"),C(40,7.5,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(35,7,"فاليير يبعده","Valir pushes")]),
+H(76,"Hilda","هيلدا",["Fighter","Tank"],[C(36,8,"كاري تخترقها","Karrie shreds"),C(15,7.5,"يودورا تصعقها","Eudora stuns"),C(131,7,"باكسيا يقلل علاجها","Baxia reduces heal"),C(3,6.5,"سيبر يقفلها","Saber suppresses")]),
+H(77,"Sun","صن",["Fighter"],[C(15,8.5,"يودورا AoE يقتل الكلونات","Eudora AoE kills clones"),C(3,8,"سيبر يقفله","Saber suppresses"),C(131,7.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(78,"Argus","أرغوس",["Fighter"],[C(131,9,"باكسيا يقلل كل علاجه","Baxia reduces all heal"),C(15,8.5,"يودورا تصعقه بعد الألت","Eudora stuns after ult"),C(3,8,"سيبر يقفله","Saber suppresses"),C(36,7.5,"كاري ضرر حقيقي","Karrie true dmg")]),
+H(79,"Ruby","روبي",["Fighter","Tank"],[C(131,9,"باكسيا يلغي سرقة حياتها","Baxia negates lifesteal"),C(36,8.5,"كاري ضرر حقيقي","Karrie true dmg"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(40,7.5,"ديروث يسرق دفاعها","Dyrroth steals defense")]),
+H(80,"Thamuz","ثاموز",["Fighter"],[C(131,9,"باكسيا يلغي علاجه","Baxia negates regen"),C(36,8.5,"كاري ضرر حقيقي","Karrie true dmg"),C(15,8,"يودورا تصعقه","Eudora stuns"),C(3,7.5,"سيبر يقفله","Saber suppresses")]),
+H(81,"X.Borg","إكس بورغ",["Fighter"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(36,8,"كاري تخترقه","Karrie shreds"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(3,7,"سيبر يقفله","Saber suppresses")]),
+H(82,"Badang","بادانغ",["Fighter"],[C(54,8.5,"ديغي يلغي جداره","Diggie removes wall CC"),C(42,8,"فوفوس يستغل اندفاشه","Phoveus exploits dash"),C(3,7.5,"سيبر يقفله","Saber suppresses"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(83,"Terizla","تيريزلا",["Fighter"],[C(36,8.5,"كاري تخترقه","Karrie shreds"),C(15,8,"يودورا تصعقه","Eudora stuns"),C(3,7.5,"سيبر يقفله","Saber suppresses"),C(131,7,"باكسيا يقلل علاجه","Baxia reduces heal")]),
+H(84,"Silvanna","سيلفانا",["Fighter","Mage"],[C(54,8.5,"ديغي يلغي ألتها","Diggie removes ult"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(36,7.5,"كاري تخترقها","Karrie shreds"),C(42,7,"فوفوس يستغل اندفاشها","Phoveus exploits dash")]),
+H(85,"Popol and Kupa","بوبول وكوبا",["Marksman"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(8,8.5,"كارينا تغتاله","Karina assassinates"),C(21,8,"هايابوسا يقتله","Hayabusa solos"),C(10,7.5,"فرانكو يسحبه","Franco hooks")]),
+H(86,"Yu Zhong","يو جونغ",["Fighter"],[C(131,9,"باكسيا يقلل كل علاجه","Baxia negates regen"),C(36,8.5,"كاري ضرر حقيقي","Karrie true dmg"),C(3,8,"سيبر يقفله","Saber suppresses"),C(40,7.5,"ديروث يسرق دفاعه","Dyrroth steals defense")]),
+H(87,"Khaleed","خالد",["Fighter"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(36,8,"كاري تخترقه","Karrie shreds"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(3,7,"سيبر يقفله","Saber suppresses")]),
+H(88,"Barats","باراتس",["Tank","Fighter"],[C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(40,8.5,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(131,8,"باكسيا يقلل علاجه","Baxia reduces heal"),C(3,7.5,"سيبر يقفله","Saber suppresses")]),
+H(89,"Brody","برودي",["Marksman"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(21,8.5,"هايابوسا يقتله","Hayabusa solos"),C(17,8,"فاني تغطس","Fanny dives"),C(10,7.5,"فرانكو يسحبه","Franco hooks")]),
+H(90,"Mathilda","ماتيلدا",["Support","Assassin"],[C(42,8.5,"فوفوس يستغل اندفاشها","Phoveus exploits dashes"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(30,7.5,"خوفرا يقطعها","Khufra stops"),C(15,7,"يودورا تصعقها","Eudora stuns")]),
+H(91,"Yve","إيف",["Mage"],[C(3,9,"سيبر يقطع ألتها","Saber cancels ult"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(92,"Beatrix","بياتريكس",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(10,8,"فرانكو يسحبها","Franco hooks")]),
+H(93,"Paquito","باكيتو",["Fighter"],[C(42,9,"فوفوس يستغل اندفاشه","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعه","Khufra stops"),C(3,8,"سيبر يقفله","Saber suppresses"),C(36,7.5,"كاري تخترقه","Karrie shreds")]),
+H(94,"Lunox","لونوكس",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(10,8.5,"فرانكو يسحبها","Franco hooks"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(21,7.5,"هايابوسا يقتلها","Hayabusa kills")]),
+H(95,"Selena","سيلينا",["Mage","Assassin"],[C(54,8.5,"ديغي يلغي السهم","Diggie removes stun"),C(20,8,"لوليتا تصد السهم","Lolita blocks arrow"),C(3,7.5,"سيبر يقفلها","Saber suppresses"),C(6,7,"تيغريال يحمي الفريق","Tigreal protects team")]),
+H(96,"Kaja","كاجا",["Fighter","Support"],[C(54,8.5,"ديغي يلغي ألته","Diggie removes ult"),C(36,8,"كاري تخترقه","Karrie shreds"),C(3,7.5,"سيبر يقفله","Saber suppresses"),C(15,7,"يودورا تصعقه","Eudora stuns")]),
+H(97,"Kimmy","كيمي",["Marksman","Mage"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(10,8,"فرانكو يسحبها","Franco hooks")]),
+H(98,"Lylia","ليليا",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(99,"Kagura","كاغورا",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(8,8.5,"كارينا تغتالها","Karina bursts"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(30,7.5,"خوفرا يقطعها","Khufra stops")]),
+H(100,"Faramis","فاراميس",["Support","Mage"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(3,8,"سيبر يقفله","Saber suppresses"),C(8,7.5,"كارينا تغتاله","Karina assassinates"),C(15,7,"يودورا تصعقه","Eudora stuns")]),
+H(101,"Vexana","فيكسانا",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(21,8.5,"هايابوسا يتفادى","Hayabusa dodges"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(102,"Hylos","هايلوس",["Tank"],[C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(40,8.5,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(131,8,"باكسيا يقلل علاجه","Baxia reduces heal"),C(54,7.5,"ديغي يلغي CC","Diggie removes CC")]),
+H(103,"Cyclops","سايكلوبس",["Mage"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(8,8.5,"كارينا تغتاله","Karina assassinates"),C(21,8,"هايابوسا يقتله","Hayabusa kills"),C(20,7.5,"لوليتا تصد مهاراته","Lolita blocks")]),
+H(104,"Luo Yi","لوو يي",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(21,8.5,"هايابوسا يتفادى","Hayabusa dodges"),C(8,8,"كارينا تغتالها","Karina assassinates"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(105,"Claude","كلود",["Marksman"],[C(30,9,"خوفرا يقطع اندفاشه","Khufra stops dash"),C(3,8.5,"سيبر يقفله","Saber suppresses"),C(42,8,"فوفوس يستغل اندفاشه","Phoveus exploits dash"),C(8,7.5,"كارينا تغتاله","Karina assassinates")]),
+H(106,"Helcurt","هيلكورت",["Assassin"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(6,8,"تيغريال يمسكه","Tigreal catches"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(20,7,"لوليتا تصد مهاراته","Lolita blocks")]),
+H(107,"Xavier","زافيير",["Mage"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(21,8.5,"هايابوسا يقتله","Hayabusa kills"),C(17,8,"فاني تغطس","Fanny dives")]),
+H(108,"Joy","جوي",["Assassin"],[C(42,9,"فوفوس يستغل اندفاشها","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعها","Khufra stops"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(38,7.5,"مينسيتار يمنع الوميض","Minsitthar disables blink")]),
+H(109,"Fredrinn","فريدرين",["Fighter","Tank"],[C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(40,8,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(3,7.5,"سيبر يقفله","Saber suppresses")]),
+H(110,"Arlott","أرلوت",["Fighter"],[C(42,8.5,"فوفوس يستغل اندفاشه","Phoveus exploits dash"),C(3,8,"سيبر يقفله","Saber suppresses"),C(15,7.5,"يودورا تصعقه","Eudora stuns"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(111,"Novaria","نوفاريا",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(112,"Ixia","إكسيا",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(10,8,"فرانكو يسحبها","Franco hooks")]),
+H(113,"Chip","تشيب",["Tank","Support"],[C(36,8.5,"كاري تخترقه","Karrie shreds"),C(54,8,"ديغي يلغي CC","Diggie removes CC"),C(40,7.5,"ديروث يسرق دفاعه","Dyrroth steals defense")]),
+H(114,"Cici","سيسي",["Fighter"],[C(42,9,"فوفوس يستغل اندفاشها","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعها","Khufra stops"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(131,7.5,"باكسيا يقلل علاجها","Baxia reduces heal")]),
+H(115,"Zhuxin","جوشين",["Fighter","Mage"],[C(3,9,"سيبر يقفله","Saber suppresses"),C(36,8.5,"كاري تخترقه","Karrie shreds"),C(131,8,"باكسيا يقلل علاجه","Baxia reduces heal"),C(15,7.5,"يودورا تصعقه","Eudora stuns")]),
+H(116,"Lukas","لوكاس",["Fighter"],[C(42,8.5,"فوفوس يستغل اندفاشه","Phoveus exploits dash"),C(3,8,"سيبر يقفله","Saber suppresses"),C(36,7.5,"كاري تخترقه","Karrie shreds"),C(131,7,"باكسيا يقلل علاجه","Baxia reduces heal")]),
+H(117,"Aamon","آمون",["Assassin"],[C(3,9,"سيبر يقفله","Saber locks"),C(20,8.5,"لوليتا ترصده","Lolita detects"),C(8,8,"كارينا تقتله","Karina kills"),C(15,7.5,"يودورا تصعقه","Eudora stuns")]),
+H(118,"Valentina","فالنتينا",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(119,"Melissa","ميليسا",["Marksman"],[C(3,9.5,"سيبر يقفلها","Saber suppresses"),C(8,9,"كارينا تغتالها","Karina assassinates"),C(21,8.5,"هايابوسا يقتلها","Hayabusa solos"),C(17,8,"فاني تغطس","Fanny dives")]),
+H(120,"Julian","جوليان",["Fighter","Mage"],[C(42,9,"فوفوس يستغل اندفاشه","Phoveus exploits dashes"),C(3,8.5,"سيبر يقفله","Saber suppresses"),C(30,8,"خوفرا يقطعه","Khufra stops"),C(36,7.5,"كاري تخترقه","Karrie shreds")]),
+H(121,"Edith","إيديث",["Tank","Marksman"],[C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(40,8.5,"ديروث يسرق دفاعها","Dyrroth steals defense"),C(131,8,"باكسيا يقلل علاجها","Baxia reduces heal"),C(3,7.5,"سيبر يقفلها","Saber suppresses")]),
+H(122,"Yin","يين",["Fighter"],[C(54,9,"ديغي يلغي عالمه","Diggie removes domain"),C(15,8.5,"يودورا تصعقه جواه","Eudora stuns inside"),C(3,8,"سيبر يقفله","Saber suppresses"),C(36,7.5,"كاري تخترقه","Karrie shreds")]),
+H(123,"Phylax","فايلاكس",["Tank","Marksman"],[C(36,9,"كاري ضرر حقيقي","Karrie true dmg"),C(40,8.5,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(131,8,"باكسيا يقلل علاجه","Baxia reduces heal"),C(54,7.5,"ديغي يلغي CC","Diggie removes CC")]),
+H(124,"Aulus","أولوس",["Fighter"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(36,8,"كاري تخترقه","Karrie shreds"),C(3,7.5,"سيبر يقفله","Saber suppresses"),C(15,7,"يودورا تصعقه","Eudora stuns")]),
+H(125,"Natan","ناتان",["Marksman"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(42,8.5,"فوفوس يستغل اندفاشه","Phoveus exploits dash"),C(30,8,"خوفرا يقطعه","Khufra stops")]),
+H(126,"Yve","إيف",["Mage"],[C(3,9,"سيبر يقطع ألتها","Saber cancels ult"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(17,7.5,"فاني تغطس","Fanny dives")]),
+H(127,"Aulus","أولوس",["Fighter"],[C(131,8.5,"باكسيا يقلل علاجه","Baxia reduces heal"),C(15,8,"يودورا تصعقه","Eudora stuns"),C(3,7.5,"سيبر يقفله","Saber suppresses"),C(36,7,"كاري تخترقه","Karrie shreds")]),
+H(128,"Xavier","زافيير",["Mage"],[C(3,9.5,"سيبر يقفله","Saber suppresses"),C(8,9,"كارينا تغتاله","Karina assassinates"),C(21,8.5,"هايابوسا يقتله","Hayabusa kills"),C(17,8,"فاني تغطس","Fanny dives")]),
+H(129,"Joy","جوي",["Assassin"],[C(42,9,"فوفوس يستغل اندفاشها","Phoveus exploits dashes"),C(30,8.5,"خوفرا يقطعها","Khufra stops"),C(3,8,"سيبر يقفلها","Saber suppresses"),C(38,7.5,"مينسيتار يمنع الوميض","Minsitthar disables")]),
+H(130,"Novaria","نوفاريا",["Mage"],[C(3,9,"سيبر يقفلها","Saber suppresses"),C(8,8.5,"كارينا تغتالها","Karina assassinates"),C(21,8,"هايابوسا يقتلها","Hayabusa kills"),C(10,7.5,"فرانكو يسحبها","Franco hooks")]),
+H(131,"Baxia","باكسيا",["Tank"],[C(36,8.5,"كاري ضرر حقيقي","Karrie true dmg"),C(54,8,"ديغي يلغي CC","Diggie removes CC"),C(40,7.5,"ديروث يسرق دفاعه","Dyrroth steals defense"),C(15,7,"يودورا تقتله","Eudora bursts")])
+];
+
+// Deduplicate by ID
+const seen=new Set();
+const heroes=D.filter(h=>{if(seen.has(h.id))return false;seen.add(h.id);return true});
+
+// Counter items with Arabic names
+const CIG={
+anti_heal:{t:"🩸 ضد العلاج / التجدد",te:"🩸 Anti-Heal",items:[
+  {en:"Dominance Ice",ar:"هيمنة الجليد"},
+  {en:"Sea Halberd",ar:"سيف هالبيرد"},
+  {en:"Glowing Wand",ar:"العصا المتوهجة"}
+]},
+anti_phy:{t:"🛡️ ضد الضرر الجسدي",te:"🛡️ Anti-Physical",items:[
+  {en:"Blade Armor",ar:"درع الشفرات"},
+  {en:"Antique Cuirass",ar:"درع الشجاعة"},
+  {en:"Wind of Nature",ar:"ريح الطبيعة"},
+  {en:"Twilight Armor",ar:"درع الشفق"}
+]},
+anti_mag:{t:"🔮 ضد الضرر السحري",te:"🔮 Anti-Magic",items:[
+  {en:"Athena's Shield",ar:"درع أثينا"},
+  {en:"Radiant Armor",ar:"الدرع المتوهج"},
+  {en:"Rose Gold Meteor",ar:"نيزك الذهب الوردي"}
+]},
+anti_cc:{t:"⛓️ ضد التحكم (CC)",te:"⛓️ Anti-CC",items:[
+  {en:"Tough Boots",ar:"حذاء الصلابة"},
+  {en:"Winter Truncheon",ar:"هراوة الشتاء"},
+  {en:"Purify (Spell)",ar:"تعويذة التطهير"}
+]}
+};
+
+// ═══════ APP ═══════
+let sel=[],results=[],roleF='All',lang='ar';
+const $=id=>document.getElementById(id);
+
+function init(){
+  setTimeout(()=>$('splash').classList.add('h'),1200);
+  $('si').addEventListener('input',onSearch);
+  $('si').addEventListener('focus',onSearch);
+  $('sc').addEventListener('click',()=>{$('si').value='';$('sc').classList.remove('v');$('dd').classList.remove('v');$('si').focus()});
+  $('bc').addEventListener('click',clrAll);
+  document.addEventListener('click',e=>{if(!e.target.closest('.srch'))$('dd').classList.remove('v')});
+  document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>{
+    lang=b.dataset.l;document.querySelectorAll('.lang button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    $('si').placeholder=lang==='ar'?'ابحث عن بطل العدو...':'Search enemy hero...';
+    updInfo();if(results.length)render();
+  }));
+  $('rf').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    roleF=b.dataset.r;document.querySelectorAll('#rf button').forEach(x=>x.classList.remove('on'));b.classList.add('on');render();
+  });
+  load();
+}
+
+function onSearch(){
+  const q=$('si').value.trim().toLowerCase();
+  $('sc').classList.toggle('v',q.length>0);
+  if(!q){$('dd').classList.remove('v');return;}
+  const r=heroes.filter(h=>h.n.toLowerCase().includes(q)||h.a.includes(q)||fz(h.n.toLowerCase(),q)).slice(0,12);
+  showDD(r);
+}
+
+function fz(s,q){let i=0;for(let c of s){if(i<q.length&&c===q[i])i++}return i===q.length}
+
+function showDD(list){
+  if(!list.length){$('dd').innerHTML='<div style="padding:16px;text-align:center;color:var(--t3)">🔍 '+(lang==='ar'?'لا توجد نتائج':'No results')+'</div>';$('dd').classList.add('v');return;}
+  const sids=sel.map(h=>h.id);
+  $('dd').innerHTML=list.map(h=>{
+    const dis=sids.includes(h.id)||sel.length>=5;
+    const rc=RC[h.r[0]]||'#666';
+    return`<div class="dd-i${dis?' dis':''}" data-id="${h.id}"><div class="dd-av" style="background:${rc}">${h.n[0]}</div><div class="dd-inf"><div class="dd-n">${h.n}</div><div class="dd-na">${h.a}</div><div class="dd-r">${h.r.join(' / ')}</div></div>${sids.includes(h.id)?'<span style="color:var(--gold)">✓</span>':''}</div>`;
+  }).join('');
+  $('dd').classList.add('v');
+  $('dd').querySelectorAll('.dd-i:not(.dis)').forEach(el=>el.addEventListener('click',()=>pick(+el.dataset.id)));
+}
+
+function pick(id){
+  if(sel.length>=5){toast(lang==='ar'?'⚠️ الحد الأقصى 5 أبطال':'⚠️ Maximum 5 heroes');return}
+  const h=heroes.find(x=>x.id===id);
+  if(!h||sel.find(x=>x.id===id))return;
+  sel.push(h);
+  // Clear search and keep focus for next pick - NO scrolling
+  $('si').value='';$('sc').classList.remove('v');$('dd').classList.remove('v');
+  renderChips();updInfo();calc();save();
+  // Keep focus on search for multi-select
+  setTimeout(()=>$('si').focus(),50);
+}
+
+function unpick(id){
+  sel=sel.filter(h=>h.id!==id);renderChips();updInfo();
+  sel.length?calc():clrRes();save();
+}
+
+function renderChips(){
+  const has=sel.length>0;$('csec').classList.toggle('has',has);
+  if(!has){$('chips').innerHTML='';$('badge').classList.add('hidden');return}
+  $('badge').classList.remove('hidden');$('badge').textContent=`⚔️ ${sel.length}/5`;
+  $('chips').innerHTML=sel.map(h=>`<div class="chip"><div class="chip-av" style="background:${RC[h.r[0]]||'#666'}">${h.n[0]}</div><span class="chip-n">${lang==='ar'?h.a:h.n}</span><button class="chip-x" onclick="unpick(${h.id})">✕</button></div>`).join('');
+}
+
+function updInfo(){
+  const t=$('infotext');
+  if(!sel.length) t.innerHTML=lang==='ar'?'⚔️ اختر أبطال العدو من البحث':'⚔️ Select enemy heroes above';
+  else t.innerHTML=`<span class="num">${sel.length}</span> ${lang==='ar'?'بطل عدو محدد':'enemy selected'} <span style="color:var(--t3)">(${lang==='ar'?'الحد: 5':'max: 5'})</span>`;
+}
+
+function calc(){
+  if(!sel.length)return;
+  const scores={};
+  sel.forEach(enemy=>{
+    (enemy.c||[]).forEach(c=>{
+      const ch=heroes.find(h=>h.id===c.id);
+      if(!ch||sel.find(s=>s.id===c.id))return;
+      if(!scores[c.id])scores[c.id]={hero:ch,total:0,det:[]};
+      scores[c.id].total+=c.s;
+      scores[c.id].det.push({en:enemy.n,ea:enemy.a,s:c.s,ar:c.ar,ren:c.en});
+    });
+  });
+  results=Object.values(scores).sort((a,b)=>b.total-a.total);
+  roleF='All';document.querySelectorAll('#rf button').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#rf button[data-r="All"]').classList.add('on');
+  render();analysis();
+  // NO auto scroll - stay at search area
+}
+
+function render(){
+  let r=results;
+  if(roleF!=='All')r=r.filter(x=>x.hero.r.includes(roleF));
+  $('rh').classList.remove('hidden');$('rf').classList.remove('hidden');
+  $('rc').textContent=`(${r.length})`;$('emp').classList.add('hidden');
+  if(!r.length){$('rl').innerHTML=`<div class="empty"><div class="ei">😕</div><h3>${lang==='ar'?'لا توجد نتائج':'No results'}</h3></div>`;return}
+  $('rl').innerHTML=r.map((item,i)=>{
+    const h=item.hero,rc=RC[h.r[0]]||'#666';
+    const pct=Math.round((item.total/(sel.length*10))*100);
+    const bc=pct>=70?'hi':pct>=40?'md':'lo';
+    const rk=i<3?['🥇','🥈','🥉'][i]:'#'+(i+1);
+    const rkc=i<3?` r${i+1}`:'';
+    return`<div class="card" onclick="togCard(this)" style="animation-delay:${i*.03}s"><div class="card-top"><span class="card-rk${rkc}">${rk}</span><div class="card-av" style="background:${rc}">${h.n[0]}</div><div class="card-inf"><div class="card-nm">${h.n}</div><div class="card-na">${h.a}</div><div class="card-rl">${h.r.map(r=>`<span class="card-rt" style="background:${RC[r]}">${r}</span>`).join('')}</div></div><div class="card-sc"><div class="card-sv">${item.total.toFixed(1)}</div><div class="card-sl">${lang==='ar'?'نقطة':'SCORE'}</div></div></div><div class="sbar"><div class="sbar-bg"><div class="sbar-f ${bc}" style="width:${pct}%"></div></div></div><div class="card-det"><div class="card-det-in">${item.det.map(d=>`<div class="cr"><span class="cr-vs">vs ${lang==='ar'?d.ea:d.en}</span><span class="cr-t">${lang==='ar'?d.ar:d.ren}</span><span class="cr-s">${d.s}</span></div>`).join('')}</div></div></div>`;
+  }).join('');
+}
+
+function togCard(el){
+  const d=el.querySelector('.card-det'),exp=d.classList.contains('exp');
+  document.querySelectorAll('.card-det.exp').forEach(x=>x.classList.remove('exp'));
+  if(!exp)d.classList.add('exp');
+}
+
+function analysis(){
+  let ph=0,mg=0,heal=false,cc=false;
+  const healH=['Estes','Floryn','Rafaela','Uranus','Alice','Alucard','Esmeralda','Yu Zhong','Thamuz','Ruby','Argus'];
+  const ccH=['Tigreal','Atlas','Franco','Johnson','Akai','Khufra','Minotaur'];
+  sel.forEach(h=>{
+    if(h.r.some(r=>['Marksman','Fighter','Assassin'].includes(r))&&!h.r.includes('Mage'))ph++;
+    if(h.r.includes('Mage'))mg++;
+    if(h.r.includes('Tank')||h.r.includes('Support')){ph+=.3;mg+=.3}
+    if(healH.includes(h.n))heal=true;
+    if(ccH.includes(h.n))cc=true;
+  });
+  const tot=ph+mg||1,pp=Math.round(ph/tot*100),mp=100-pp;
+  let recs=[];
+  if(pp>50)recs.push(CIG.anti_phy);
+  if(mp>50)recs.push(CIG.anti_mag);
+  if(heal)recs.push(CIG.anti_heal);
+  if(cc)recs.push(CIG.anti_cc);
+  if(!recs.length){recs.push(CIG.anti_phy);recs.push(CIG.anti_mag)}
+  const ci=$('cis');ci.classList.remove('hidden');
+  ci.innerHTML=`<h3>🛡️ ${lang==='ar'?'المعدات المضادة المقترحة':'Recommended Counter Items'}</h3><div class="dmg-an"><div class="dmg-t"><div class="dmg-l">${lang==='ar'?'ضرر جسدي':'Physical'}</div><div class="dmg-b" style="background:linear-gradient(90deg,#FF9800,#FF5722);width:${Math.max(pp,20)}%">${pp}%</div></div><div class="dmg-t"><div class="dmg-l">${lang==='ar'?'ضرر سحري':'Magic'}</div><div class="dmg-b" style="background:linear-gradient(90deg,#7C4DFF,#E040FB);width:${Math.max(mp,20)}%">${mp}%</div></div></div>${recs.map(c=>`<div class="ic"><div class="ic-h"><span class="ic-n">${lang==='ar'?c.t:c.te}</span></div><div class="il">${c.items.map(i=>`<span class="it">${lang==='ar'?(i.ar+' / '+i.en):i.en}</span>`).join('')}</div></div>`).join('')}`;
+}
+
+function clrAll(){sel=[];results=[];renderChips();updInfo();clrRes();save();toast(lang==='ar'?'🗑️ تم المسح':'🗑️ Cleared')}
+function clrRes(){$('rl').innerHTML='';$('rh').classList.add('hidden');$('rf').classList.add('hidden');$('cis').classList.add('hidden');$('emp').classList.remove('hidden')}
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('v');setTimeout(()=>t.classList.remove('v'),2200)}
+
+function save(){try{localStorage.setItem('mlbb_s',JSON.stringify(sel.map(h=>h.id)))}catch(e){}}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem('mlbb_s')||'[]');
+    s.forEach(id=>{const h=heroes.find(x=>x.id===id);if(h)sel.push(h)});
+    if(sel.length){renderChips();updInfo();calc()}
+  }catch(e){}
+  updInfo();
+}
+
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
+</script>
+</body>
+</html>
